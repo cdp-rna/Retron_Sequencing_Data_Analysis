@@ -1,0 +1,248 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2580
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 import os\
+import fuzzysearch\
+from fuzzysearch import find_near_matches\
+import sys\
+from collections import Counter\
+import collections\
+import csv\
+\
+"""\
+location and name of fasta file from sequencing run\
+"""\
+\
+base_path = 'PATH_TO_FILE'\
+filename = 'FILENAME.fastq'\
+\
+\
+"""\
+names of files output.\
+"""\
+name_file3 = 'FILENAME1.csv'\
+name_file4 = 'FILENAME2.csv'\
+fasta_keep_list = 'FILENAME3.fasta'\
+\
+"""\
+DNA substring that's searched for for keep_list. Uncomment the appropriate retron subsequence\
+"""\
+\
+#eco1\
+#ssDNA_substring1 = 'TTTCCTGGTT'\
+#ssDNA_substring2 = 'ATCAGGCGAT'\
+#ssDNA_substring3 = 'CAGACAGTAA'\
+\
+#eco2 \
+#ssDNA_substring1 = 'CACACCTGCC' \
+#ssDNA_substring2 = 'CTCTGAATCA'\
+#ssDNA_substring3 = 'GGAATCGCCT'\
+\
+#eco4\
+#ssDNA_substring1 = 'AGCCGCGGAA'\
+#ssDNA_substring2 = 'TGGATTGCGG'\
+#ssDNA_substring3 = 'CAACTGTAAA'\
+\
+#eco6\
+#ssDNA_substring1 = 'ATGTCGTCGG'\
+#ssDNA_substring2 = 'GGCACCATCG'\
+#ssDNA_substring3 = 'GACGACGGTG'\
+\
+#eco9\
+#ssDNA_substring1 = 'CTTTAGACTT'\
+#ssDNA_substring2 = 'CCTGAATGGA'\
+#ssDNA_substring3 = 'AAAGTGCTAA'\
+\
+#sen2\
+#ssDNA_substring1 = 'GCGCTAGAAA'\
+#ssDNA_substring2 = 'TAGAGACTTC'\
+#ssDNA_substring3 = 'TTTCTAGCGC'\
+\
+"""\
+#retron sequence. Uncomment the appropriate retron sequences\
+"""\
+\
+#eco1\
+#retron_seq = 'ATGCGCACCCTTAGCGAGAGGTTTATCATTAAGGTCAACCTCTGGATGTTGTTTCGGCATCCTGCATTGAATCTGAGTTACTGTCTGTTTTCCTTGTTGGAACGGAGAGCATCGCCTGATGCTCTCCGAGCCAACCAGGAAACCCGTTTTTTCTGACGTAAGGGTGCGCA'\
+\
+#eco2\
+#retron_seq = 'CACGCATGTAGGCAGATTTGTTGGTTGTGAATCGCAACCAGTGGCCTTAATGGCAGGAGGAATCGCCTCCCTAAAATCCTTGATTCAGAGCTATACGGCAGGTGTGCTGTGCGAAGGAGTGCCTGCATGCGT'\
+\
+#eco4\
+#retron_seq = 'GCTCTTTAGCGTTTTATGGATTTACCACCTGATTGGTCAAATCTAGTTGGGCGTTGCGCCAAACTCTAATTTATTGATTACATTTACAGTTGCGGAACAAACTTTTTGAGCCGCAATCCAGTAGGTTGCGGATCAAAAAGTTTGTTCCGCGGCTTCAAGTAAAGAGC'\
+\
+#eco6\
+#retron_seq = 'TTTTTGTTGCATTATTCTTAGCGCACCAGCGATTCGCTTGGTATGCGGCAGTCAACAACATTAAATTGTCAGTTTTTGCTTTTACAAAAAAGCGTCCACTATGGACCTATCAGCGAGGCCCCACCGTCGTCAACTACGATGGTGCCGTAGCCGACGACATTACGTACGGTCGAAAGATAGCAGAGG'\
+\
+#eco9\
+#retron_seq = 'ATCTCGCATCTTTTGCTATCCTAACCCTACCTTTACGCGCGGGATAACAGGTTTATCCTTGTCGGGCGTTTCGCCAGACACTAATTTATTGTGGACATTTAGGGTTGCGCTTTAGCACTTTCAGCAAGATCCTTCATGCCACTGCGTTCCATTCAGGATCTTGCTGAAAGTCTAAAGCGCATCCTTTAGGTAAAGGGGT'\
+\
+#sen2\
+#retron_seq = 'ACTCTTTAGCGTTAGGCTTTGATTTATAGCCTTGTCGAGCGTTTCGCCAGACACTAACTTATTGAGTACTTTTAGGGTTGCGCTAGAAAGTTTTCTACCGATCCTAGAAGTCTCTAGGATCGGTAGAAAACTTTCTAGCGCCTCCTCTAGTAAAGAGT'\
+\
+\
+text_list = []\
+RC_text_list = []\
+\
+\
+with open(os.path.join(base_path, filename), "r") as f:\
+    lines=f.readlines()\
+head=[item[:-1] for item in lines[::4]] #get rid of '\\n'\
+read=[item[:-1] for item in lines[1::4]]\
+text_list = text_list + read\
+print(len(text_list))\
+\
+trimmed_list = []\
+twox_trimmed_list = []\
+\
+for i in text_list:\
+    adaptor = 'AAAAAAAAAAGATCG'\
+    BC_find = (find_near_matches(adaptor, i, max_l_dist=1))\
+        #pull out the object 'matched' from list and convert that object to a string\
+    BC_output = [x.matched for x in BC_find]\
+    BC_output_str = ''.join(x.matched for x in BC_find)\
+    #want to keep BC_head\
+    if (len(BC_output_str)) > 0:\
+        BC_head, BC_sep, BC_tail = i.partition(BC_output_str)\
+        if len(BC_head) > 1:\
+            trimmed_list.append(BC_head)\
+        \
+print(len(trimmed_list))\
+\
+#this seemed to only be a problem for one dataset\
+for j in trimmed_list:\
+    #print(j)\
+    trimmed_more = j.split('AAAAAAA',1)[0]\
+    twox_trimmed_list.append(trimmed_more)\
+print(len(twox_trimmed_list))\
+\
+#using 3 retron specific strings to search for 'retron seq'\
+\
+keep_list = [] \
+reject_list = []\
+\
+for k in twox_trimmed_list:\
+    dna_find1 = (find_near_matches(ssDNA_substring1, k, max_l_dist=1))  \
+    dna_find2 = (find_near_matches(ssDNA_substring2, k, max_l_dist=1))\
+    dna_find3 = (find_near_matches(ssDNA_substring3, k, max_l_dist=1))\
+    \
+    #pull out the object 'matched' from list and convert that object to a string\
+    output = [x.matched for x in dna_find1] + [x.matched for x in dna_find2] + [x.matched for x in dna_find3]\
+    #output = [x.matched for x in dna_find1] \
+    \
+    if len(output) == 0:\
+        reject_list.append(k)\
+    if len(output) > 0:\
+        keep_list.append(k)\
+\
+print('full_list length:',len(twox_trimmed_list))\
+print('reject_list length:', len(reject_list))\
+print('keep_list length:', len(keep_list))\
+\
+# reverse transcribe keep list and remove the A left over from ligation\
+\
+end_dict = \{\}\
+begin_dict = \{\}\
+RC_keep_list = []\
+two_RC_keep_list = []\
+other_list = []\
+A_find = []\
+\
+revcompl = lambda x: ''.join([\{'A':'T','C':'G','G':'C','T':'A','N':'N'\}[B] for B in x][::-1])\
+\
+#reverse complement the sequences\
+for l in keep_list:\
+    if l:\
+        RC = (revcompl(l))  \
+        RC_keep_list.append(format(RC)) \
+\
+print(RC_keep_list[:10])\
+\
+#remove a single 'A' 3' of string from ligation step, also keep all strings that don't end in A\
+for m in RC_keep_list:\
+    A_find = m[-1]\
+    if A_find is str('A'):\
+        l = len(m) \
+        remove_last = m[:l-1]\
+        two_RC_keep_list.append(remove_last)\
+    else:\
+        two_RC_keep_list.append(m)\
+\
+print('length of two_RC_keep_list:', len(two_RC_keep_list))\
+print(two_RC_keep_list[:10])\
+\
+#make data readable/sorted\
+length_list_freq = \{\}\
+make_total_length_list = []\
+\
+for m in two_RC_keep_list:       \
+    beginfind = m[-10:]\
+    b_find = (find_near_matches(beginfind, retron_seq, max_l_dist=1))\
+    if len(b_find) > 0:\
+        if len(m) in length_list_freq:\
+            # incrementing the counr\
+            length_list_freq[len(m)] += 1\
+        else:\
+          # initializing the count\
+          length_list_freq[len(m)] = 1\
+            \
+#calculate sum of length_list_dictionary values for percentage calculations\
+s_len = sum(length_list_freq.values())\
+print(s_len)\
+\
+#convert to ordered dict and put 0's in spots that dont have integers\
+length_list_freq.update(dict.fromkeys(set(range(len(retron_seq))).difference(length_list_freq), 0))\
+length_list_freq = collections.OrderedDict(sorted(length_list_freq.items()))\
+print(length_list_freq)\
+\
+with open(name_file3, 'w') as output:\
+    writer = csv.writer(output)\
+    for key, value in length_list_freq.items():\
+        pct = value * 100.0 / s_len\
+        writer.writerow([key, pct])\
+        #print(pct)\
+#makes length list but with counts instead of %\
+length_list_values = []\
+\
+for m in two_RC_keep_list:       \
+    beginfind = m[-10:]\
+    b_find = (find_near_matches(beginfind, retron_seq, max_l_dist=1))\
+    if len(b_find) > 0:\
+        length_list_values.append(len(m))\
+\
+with open(name_file4, 'w') as output:\
+    writer = csv.writer(output)\
+\
+    writer.writerow(length_list_values)\
+        #print(pct)\
+\
+print('done')\
+\
+\
+#Makes a fasta of RC_keep_list for alignment\
+\
+#RC_substring = (revcompl(ssDNA_substring))\
+length_list = []\
+\
+list_name = []\
+list_name.append(list(range(len(keep_list))))\
+list_name = [item for sublist in list_name for item in sublist]\
+\
+for i in two_RC_keep_list:\
+    length_list.append(i)\
+\
+\
+ofile = open(fasta_keep_list, "w")\
+\
+for i in range(len(length_list)):\
+    #ofile.write(">" + length_list[i] + "\\n")\
+    ofile.write(">" + str(list_name[i]) + "\\n" + length_list[i] + "\\n")\
+\
+#do not forget to close it\
+\
+ofile.close()\
+}
